@@ -8,14 +8,18 @@ namespace GADE6122_POE_Part_1
 {
     internal class Level
     {
-        private int _width;
-        private int _height;
-        private Tile[,] _tiles;
+        public int _width;
+        public int _height;
+        public Tile[,] _tiles;
+
+
 
         internal enum TileType
         {
             Wall,
-            Empty
+            Empty,
+            hero,
+            exitTile
         }
 
         public Level(int width, int height)
@@ -23,7 +27,21 @@ namespace GADE6122_POE_Part_1
             _width = width;
             _height = height;
             _tiles = new Tile[width, height];
+            Position spawn = GetRandomEmptyPosition();
+            hero = new HeroTile(spawn);
+            _tiles[spawn.x, spawn.y] = hero;
+            hero.Updatevision(this);
 
+            
+            Position exitPos;
+            do
+            {
+                exitPos = GetRandomEmptyPosition();
+            }
+            while (exitPos.x == spawn.x && exitPos.y == spawn.y); // don’t overlap Hero
+
+            _exitTile = new ExitTile(exitPos);
+            _tiles[exitPos.x, exitPos.y] = _exitTile;
             InitialiseTiles();
         }
 
@@ -38,11 +56,21 @@ namespace GADE6122_POE_Part_1
                 case TileType.Empty:
                     tile = new EmptyTile(position);
                     break;
+                    case TileType.hero:
+                tile = new HeroTile(position);
+                    break;
+                case TileType.exitTile:
+                    tile= new ExitTile(position);
+                    break;
                 default: throw new ArgumentOutOfRangeException(nameof(type), $" Unsupported TileType: {type}");
             }
+             
             _tiles[position.x, position.y] = tile;
             return tile;
         }
+        private ExitTile _exitTile;
+        public ExitTile ExitTile { get { return _exitTile; } }
+
         private void InitialiseTiles()
         {
             for (int x = 0; x < _width; x++)
@@ -51,7 +79,12 @@ namespace GADE6122_POE_Part_1
                     bool isBoundry = x == 0 || y == 0 || x == _width - 1 || y == _height - 1;
                     CreateTile(isBoundry ? TileType.Wall : TileType.Empty, new Position(x, y));
                 }
+            Position spawn = GetRandomEmptyPosition();
+            hero = new HeroTile(spawn);
+            _tiles[spawn.x, spawn.y] = hero;
+            hero.Updatevision(this);
         }
+
 
         public override string ToString()
         {
@@ -65,6 +98,38 @@ namespace GADE6122_POE_Part_1
                 sb.Append('\n');
             }
             return sb.ToString();
+
+
+
+        }
+        private HeroTile hero;
+        public HeroTile Hero => hero;
+
+        private Position GetRandomEmptyPosition()
+        {
+
+            Random random = new Random();
+            Position position;
+            do
+            {
+                int x = random.Next(1, _width - 1);
+                int y = random.Next(1, _height - 1);
+                position = new Position(x, y);
+            } while (!(_tiles[position.x, position.y] is EmptyTile));
+            return position;
+            
+        }
+
+
+
+        public void SwopTiles(Tile a, Tile b)
+        {
+            Position temp = (Position)a._position;
+            a._position = b._position;
+            b._position = temp;
+
+            _tiles[a.X, a.Y] = a;
+            _tiles[b.X, b.Y] = b;
         }
     }
 }

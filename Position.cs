@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace GADE6122_POE_Part_1
 {
-    internal class Position
+    public class Position
     {
         // Coordinates
         private int _x;

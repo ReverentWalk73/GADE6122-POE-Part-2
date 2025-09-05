@@ -46,7 +46,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CharacterTiles.cs" />
+    <Compile Include="Direction.cs" />
     <Compile Include="EmptyTile.cs" />
+    <Compile Include="ExitTile.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -54,6 +57,7 @@
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
     <Compile Include="GameEngine.cs" />
+    <Compile Include="HeroTile.cs" />
     <Compile Include="Level.cs" />
     <Compile Include="Position.cs" />
     <Compile Include="Program.cs" />
