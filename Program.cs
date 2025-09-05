@@ -14,9 +14,25 @@ namespace GADE6122_POE_Part_1
         [STAThread]
         static void Main()
         {
+            Application.ThreadException += (s, e) =>
+            {
+                MessageBox.Show("UI Thread exception:\n" + e.Exception, "Crash");
+            };
+            AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+            {
+                MessageBox.Show("Non-UI exception:\n" + e.ExceptionObject, "Crash");
+            };
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Form1());
+            try
+            {
+                Application.Run(new Form1()); // your startup form
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Startup exception:\n" + ex, "Crash");
+            }
         }
     }
 }

@@ -24,9 +24,11 @@ namespace GADE6122_POE_Part_1
 
         public Level(int width, int height)
         {
+              
             _width = width;
             _height = height;
             _tiles = new Tile[width, height];
+            InitialiseTiles();
             Position spawn = GetRandomEmptyPosition();
             hero = new HeroTile(spawn);
             _tiles[spawn.x, spawn.y] = hero;
@@ -42,7 +44,7 @@ namespace GADE6122_POE_Part_1
 
             _exitTile = new ExitTile(exitPos);
             _tiles[exitPos.x, exitPos.y] = _exitTile;
-            InitialiseTiles();
+           
         }
 
         private Tile CreateTile(TileType type, Position position)
@@ -79,10 +81,7 @@ namespace GADE6122_POE_Part_1
                     bool isBoundry = x == 0 || y == 0 || x == _width - 1 || y == _height - 1;
                     CreateTile(isBoundry ? TileType.Wall : TileType.Empty, new Position(x, y));
                 }
-            Position spawn = GetRandomEmptyPosition();
-            hero = new HeroTile(spawn);
-            _tiles[spawn.x, spawn.y] = hero;
-            hero.Updatevision(this);
+            
         }
 
 

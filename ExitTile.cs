@@ -11,7 +11,7 @@ namespace GADE6122_POE_Part_1
         public ExitTile(Position position) : base(position)
         {
         }
-        public override char Display => '\u25BC';
+        public override char Display => '\u25a6';//
     }
 }
     
