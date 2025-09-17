@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace GADE6122_POE_Part_1
 {
@@ -66,6 +67,19 @@ namespace GADE6122_POE_Part_1
                 currentLevel.SwopTiles(hero, target);
                 hero.Updatevision(currentLevel);
                 return true;
+            }
+            if (target is ExitTile)
+            {
+                hero._position= target._position;
+                if (_currentLevelNumber < numberOfLevels)
+                {
+                    NextLevel();
+                    _gameState = GameState.InProgress;
+                }
+                else
+                {
+                    _gameState = GameState.Complete;
+                }
             }
             return false;
 
