@@ -49,6 +49,7 @@
     <Compile Include="CharacterTiles.cs" />
     <Compile Include="Direction.cs" />
     <Compile Include="EmptyTile.cs" />
+    <Compile Include="EnemyTile.cs" />
     <Compile Include="ExitTile.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
@@ -57,6 +58,7 @@
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
     <Compile Include="GameEngine.cs" />
+    <Compile Include="GruntTile.cs" />
     <Compile Include="HeroTile.cs" />
     <Compile Include="Level.cs" />
     <Compile Include="Position.cs" />

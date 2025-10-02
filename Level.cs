@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing.Text;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -11,24 +13,34 @@ namespace GADE6122_POE_Part_1
         public int _width;
         public int _height;
         public Tile[,] _tiles;
-
-
-
+        private EnemyTile[] _enemies;
+        public EnemyTile[] Enemies => _enemies;
         internal enum TileType
         {
             Wall,
             Empty,
-            hero,
-            exitTile
+            Hero,
+            ExitTile,
+            Enemy 
         }
+        private HeroTile hero;
+        public HeroTile Hero => hero;
+        private ExitTile _exitTile;
+        private HeroTile oldHero;
 
-        public Level(int width, int height, HeroTile hero = null)
+        public ExitTile ExitTile { get { return _exitTile; } }
+
+        public int CurrentLevelNumber { get; }
+
+        public Level(int width, int height,int numEnemies, HeroTile hero = null)
         {
             _width = width;
             _height = height;
             _tiles = new Tile[width, height];
+            _enemies = new EnemyTile[0];
             InitialiseTiles();
 
+            // Placing hero
             if (hero == null)
             {
                 Position spawn = GetRandomEmptyPosition();
@@ -42,8 +54,7 @@ namespace GADE6122_POE_Part_1
                 this.hero = hero;
                 _tiles[spawn.x, spawn.y] = this.hero;
             }
-            this.hero.Updatevision(this);
-
+            // Placing Exit
             Position exitPos;
             do
             {
@@ -53,6 +64,28 @@ namespace GADE6122_POE_Part_1
 
             _exitTile = new ExitTile(exitPos);
             _tiles[exitPos.x, exitPos.y] = _exitTile;
+
+            // Initializing and placing enemies
+            _enemies = new EnemyTile[numEnemies];
+            for (int i = 0; i < numEnemies; i++)
+            {
+                Position enemyPos = GetRandomEmptyPosition();
+                var enemy = (EnemyTile)CreateTile(TileType.Enemy, enemyPos);
+                _enemies[i] = enemy;
+            }
+            UpdateVision();
+        }
+
+        public Level(int width, int height, HeroTile oldHero)
+        {
+            _width = width;
+            _height = height;
+            this.oldHero = oldHero;
+        }
+
+        public Level(int currentLevelNumber)
+        {
+            CurrentLevelNumber = currentLevelNumber;
         }
 
         private Tile CreateTile(TileType type, Position position)
@@ -66,11 +99,14 @@ namespace GADE6122_POE_Part_1
                 case TileType.Empty:
                     tile = new EmptyTile(position);
                     break;
-                case TileType.hero:
+                case TileType.Hero:
                     tile = new HeroTile(position);
                     break;
-                case TileType.exitTile:
+                case TileType.ExitTile:
                     tile = new ExitTile(position);
+                    break;
+                case TileType.Enemy:
+                    tile = new GruntTile(position);// Initiating the grunt tile
                     break;
                 default: throw new ArgumentOutOfRangeException(nameof(type), $" Unsupported TileType: {type}");
             }
@@ -78,9 +114,6 @@ namespace GADE6122_POE_Part_1
             _tiles[position.x, position.y] = tile;
             return tile;
         }
-        private ExitTile _exitTile;
-        public ExitTile ExitTile { get { return _exitTile; } }
-
         private void InitialiseTiles()
         {
             for (int x = 0; x < _width; x++)
@@ -89,7 +122,6 @@ namespace GADE6122_POE_Part_1
                     bool isBoundry = x == 0 || y == 0 || x == _width - 1 || y == _height - 1;
                     CreateTile(isBoundry ? TileType.Wall : TileType.Empty, new Position(x, y));
                 }
-
         }
         public override string ToString()
         {
@@ -103,17 +135,10 @@ namespace GADE6122_POE_Part_1
                 sb.Append('\n');
             }
             return sb.ToString();
-
-
-
         }
-        private HeroTile hero;
-        public HeroTile Hero => hero;
-
+        private static readonly Random random = new Random();
         private Position GetRandomEmptyPosition()
         {
-
-            Random random = new Random();
             Position position;
             do
             {
@@ -122,9 +147,7 @@ namespace GADE6122_POE_Part_1
                 position = new Position(x, y);
             } while (!(_tiles[position.x, position.y] is EmptyTile));
             return position;
-
         }
-
         public void SwopTiles(Tile a, Tile b)
         {
             Position temp = (Position)a._position;
@@ -137,5 +160,13 @@ namespace GADE6122_POE_Part_1
             if (a is HeroTile) hero = (HeroTile)a;
             if (b is HeroTile) hero = (HeroTile)b;
         }
+            public void UpdateVision()
+            {
+                hero.Updatevision(this);
+                foreach (var enemy in _enemies)
+                {
+                    enemy.Updatevision(this);
+                }
+            }
     }
 }

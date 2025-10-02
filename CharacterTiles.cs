@@ -22,8 +22,6 @@ namespace GADE6122_POE_Part_1
                 this.vision = new Tile[4];
             }
 
-
-
             public void Updatevision(Level level)
             {
                 var t = level._tiles;
