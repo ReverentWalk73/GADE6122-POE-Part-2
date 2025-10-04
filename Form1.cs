@@ -18,7 +18,7 @@ namespace GADE6122_POE_Part_1
             public Form1()
             {
                 InitializeComponent();
-                gameEngine = new GameEngine(10);
+                gameEngine = new GameEngine(10, 5);
 
                 this.Text = "GADE6112 - Project One - Hero Game";
                 this.Size = new Size(500, 500);

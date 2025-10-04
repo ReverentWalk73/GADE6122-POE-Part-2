@@ -80,12 +80,49 @@ namespace GADE6122_POE_Part_1
         {
             _width = width;
             _height = height;
+            _tiles = new Tile[width, height];
+            InitialiseTiles();
             this.oldHero = oldHero;
+
+            // Place the hero on a random empty position
+            Position spawn = GetRandomEmptyPosition();
+            oldHero._position = spawn;
+            this.hero = oldHero;
+            _tiles[spawn.x, spawn.y] = this.hero;
+
+            // Place the exit on a different random empty position
+            Position exitPos;
+            do
+            {
+                exitPos = GetRandomEmptyPosition();
+            }
+            while (exitPos.x == this.hero.X && exitPos.y == this.hero.Y);
+
+            _exitTile = new ExitTile(exitPos);
+            _tiles[exitPos.x, exitPos.y] = _exitTile;
+
+            // Initialize enemies (you may want to pass numEnemies as a parameter)
+            int numEnemies = 0; // Set this to the desired number of enemies
+            _enemies = new EnemyTile[numEnemies];
+            for (int i = 0; i < numEnemies; i++)
+            {
+                Position enemyPos = GetRandomEmptyPosition();
+                var enemy = (EnemyTile)CreateTile(TileType.Enemy, enemyPos);
+                _enemies[i] = enemy;
+            }
+
+            UpdateVision();
         }
 
         public Level(int currentLevelNumber)
         {
             CurrentLevelNumber = currentLevelNumber;
+            // Set default width/height or pass them as parameters
+            _width = 10; // or any default value
+            _height = 10; // or any default value
+            _tiles = new Tile[_width, _height];
+            InitialiseTiles();
+            // You may want to add hero/enemies/exit here as needed
         }
 
         private Tile CreateTile(TileType type, Position position)

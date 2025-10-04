@@ -1,9 +1,11 @@
-﻿using System;
+﻿using GADE6122_POE_Part_1.GADE6122_POE_Part_1;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static GADE6122_POE_Part_1.GameEngine;
 
 namespace GADE6122_POE_Part_1
 {
@@ -20,12 +22,20 @@ namespace GADE6122_POE_Part_1
         private Random random;
         private int numberOfLevels;
         public int numEnemies;
-        
+
         private GameState _gameState = GameState.InProgress;
         private int _currentLevelNumber = 1;
         private int v;
         private const int MIN_SIZE = 10;
         private const int MAX_SIZE = 20;
+
+        public string HeroStats
+        {
+            get
+            {
+                return $"{currentLevel.Hero.HitPoints  }/{currentLevel.Hero.MaxHitPoints}";
+            }
+        }
 
         // Constructor
         public GameEngine(int numberOfLevels, int numEnemies)
@@ -35,11 +45,12 @@ namespace GADE6122_POE_Part_1
             _currentLevelNumber = 1;
             int width = random.Next(MIN_SIZE, MAX_SIZE + 1);
             int height = random.Next(MIN_SIZE, MAX_SIZE + 1);
-            this.currentLevel = new Level( width, height, numEnemies);
+            this.currentLevel = new Level(width, height, numEnemies);
             _gameState = GameState.InProgress;
         }
         public GameEngine(int v)
         {
+            StartGame();
             this.v = v;
         }
 
@@ -65,8 +76,10 @@ namespace GADE6122_POE_Part_1
         }
         public override string ToString()
         {
-            if (currentLevel == null)
-                return "No level has been generated";
+            if (_gameState == GameState.GameOver)
+            {
+                return "Game Over!";
+            }
             return currentLevel.ToString();
         }
         private bool MoveHero(Direction.DirectionType direction)
@@ -86,7 +99,7 @@ namespace GADE6122_POE_Part_1
             }
             if (target is ExitTile)
             {
-                hero._position= target._position;
+                hero._position = target._position;
                 if (_currentLevelNumber < numberOfLevels)
                 {
                     NextLevel();
@@ -103,7 +116,55 @@ namespace GADE6122_POE_Part_1
         public bool TriggerMovement(Direction.DirectionType direction)
         {
             return MoveHero(direction);
-        }
+        } 
         public GameState CurrentGameState { get { return _gameState; } }
+        private bool HeroAttack(Direction.DirectionType direction) {
+            Tile targetTile = currentLevel.Hero.Vision[(int)direction];
+
+            if (targetTile is CharacterTiles characterTarget)
+            {
+                // Hero attacks this enemy
+                currentLevel.Hero.Attack(characterTarget);
+                return true;   // Attack was successful
+            }
+
+            return false;  // No valid target }
+        }
+        public void TriggerAttack(Direction.DirectionType direction)
+        {
+            // Call hero attack
+            bool success = HeroAttack(direction);
+
+            // If hero attack was successful, enemies should attack back
+            if (success)
+            {
+                EnemiesAttack();
+                if (currentLevel.Hero.IsDead)
+                {
+                    _gameState = GameState.GameOver;
+                }
+            }
+
+            // After attack, update vision + display
+            currentLevel.UpdateVision();
+        }
+
+            private void EnemiesAttack()
+        {
+            foreach (EnemyTile enemy in currentLevel.Enemies)
+            {
+                if (!enemy.IsDead)
+                {
+                    // Get potential hero targets
+                    CharacterTiles[] targets = enemy.GetTargets();
+
+                    foreach (CharacterTiles target in targets)
+                    {
+                        enemy.Attack(target);
+                    }
+                }
+            }
+        }
+        
     }
 }
