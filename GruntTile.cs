@@ -9,11 +9,15 @@ namespace GADE6122_POE_Part_1
 {
     internal class GruntTile : EnemyTile
     {
+        // private Tile[] Vision { get; } 
+
         // Implementing a GruntTile class with parameter position, while being passed to base class.
-        public GruntTile(Position position) : base(position, 10, 1) 
+        private static Random random = new Random();
+        public GruntTile(Position position) : base(position, 10, 1)
         {
 
         }
+
         public override char Display
         {
             get
@@ -21,29 +25,38 @@ namespace GADE6122_POE_Part_1
                 return IsDead ? 'X' : 'G';
             }
         }
+
         // Overriding boolean GetMove
         public override bool GetMove(out Tile tile)
         {
-            var emptyTiles = Vision.OfType<CharacterTiles>().ToList();
+            var emptyTiles = Vision.Where(t => t is EmptyTile).ToList();
             if (emptyTiles.Count > 0)
             {
                 // Random empty tile
-                var random = new Random();
                 tile = emptyTiles[random.Next(emptyTiles.Count)];
                 return true;
             }
             tile = null;
             return false;
         }
+
         // overriding the CharacterTiles[]
         public override CharacterTiles[] GetTargets()
         {
-            var hero = Vision.OfType<CharacterTiles>().FirstOrDefault(t => t.GetType().Name == "HeroTile");
+            var hero = Vision.OfType<CharacterTiles>().FirstOrDefault(t => t.GetType().Name is "HeroTile");
             if (hero != null)
             {
-                return new[] { hero };
+                return new CharacterTiles[] { hero };
             }
             return new CharacterTiles[0];
         }
+
+        public override void UpdateVision(Level level)
+        {
+            SetLevel(level);
+            base.UpdateVision(level);
+        }
     }
 }
+    
+

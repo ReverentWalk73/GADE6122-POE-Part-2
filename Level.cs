@@ -14,7 +14,15 @@ namespace GADE6122_POE_Part_1
         public int _height;
         public Tile[,] _tiles;
         private EnemyTile[] _enemies;
+        private HeroTile hero;
+        private HeroTile oldHero;
+        public HeroTile Hero => hero;
+        private ExitTile _exitTile;
+        private static readonly Random random = new Random();
         public EnemyTile[] Enemies => _enemies;
+        public ExitTile ExitTile { get { return _exitTile; } }
+        public int CurrentLevelNumber { get; }
+
         internal enum TileType
         {
             Wall,
@@ -23,108 +31,175 @@ namespace GADE6122_POE_Part_1
             ExitTile,
             Enemy 
         }
-        private HeroTile hero;
-        public HeroTile Hero => hero;
-        private ExitTile _exitTile;
-        private HeroTile oldHero;
-
-        public ExitTile ExitTile { get { return _exitTile; } }
-
-        public int CurrentLevelNumber { get; }
-
         public Level(int width, int height,int numEnemies, HeroTile hero = null)
         {
             _width = width;
             _height = height;
             _tiles = new Tile[width, height];
             _enemies = new EnemyTile[0];
-            InitialiseTiles();
+            InitializeTiles();
 
             // Placing hero
-            if (hero == null)
-            {
-                Position spawn = GetRandomEmptyPosition();
-                this.hero = new HeroTile(spawn);
-                _tiles[spawn.x, spawn.y] = this.hero;
-            }
-            else
-            {
-                Position spawn = GetRandomEmptyPosition();
-                hero._position = spawn;
-                this.hero = hero;
-                _tiles[spawn.x, spawn.y] = this.hero;
-            }
-            // Placing Exit
-            Position exitPos;
-            do
-            {
-                exitPos = GetRandomEmptyPosition();
-            }
-            while (exitPos.x == this.hero.X && exitPos.y == this.hero.Y);
-
-            _exitTile = new ExitTile(exitPos);
-            _tiles[exitPos.x, exitPos.y] = _exitTile;
-
-            // Initializing and placing enemies
-            _enemies = new EnemyTile[numEnemies];
-            for (int i = 0; i < numEnemies; i++)
-            {
-                Position enemyPos = GetRandomEmptyPosition();
-                var enemy = (EnemyTile)CreateTile(TileType.Enemy, enemyPos);
-                _enemies[i] = enemy;
-            }
+            placeHero(hero);
+            // Placing exit
+            placeExit();
+            // Placing enemies
+            placeEnemies(numEnemies);
+            // Updating vision
             UpdateVision();
         }
 
-        public Level(int width, int height, HeroTile oldHero)
+        public Level(int width, int height, EnemyTile[] oldEnemies, HeroTile oldHero)
         {
             _width = width;
             _height = height;
             _tiles = new Tile[width, height];
-            InitialiseTiles();
-            this.oldHero = oldHero;
+            InitializeTiles();
 
-            // Place the hero on a random empty position
+            // place hero
+            Position heroPos = GetRandomEmptyPosition();
+            oldHero._position = heroPos;
+            hero = oldHero;
+            _tiles[heroPos.x, heroPos.y] = hero;
+
+            Position exitPos;
+            do
+            {
+                exitPos = GetRandomEmptyPosition();
+            } while (exitPos.x == hero.X && exitPos.y == hero.Y);
+            _exitTile = new ExitTile(exitPos);
+            _tiles[exitPos.x, exitPos.y] = _exitTile;
+
+            _enemies = new EnemyTile[oldEnemies.Length];
+            for (int i = 0; i < oldEnemies.Length; i++)
+            {
+                Position enemyPos = GetRandomEmptyPosition();
+                oldEnemies[i]._position = enemyPos;
+                _enemies[i] = oldEnemies[i];
+                _tiles[enemyPos.x, enemyPos.y] = oldEnemies[i];
+            }
+            UpdateVision();
+        }
+
+        private void InitializeTiles()
+        {
+            for (int x = 0; x < _width; x++)
+                for (int y = 0; y < _height; y++)
+                {
+                    bool isBoundary = x == 0 || y == 0 || x == _width - 1 || y == _height - 1;
+                    CreateTile(isBoundary ? TileType.Wall : TileType.Empty, new Position(x, y));
+                }
+        }
+
+        private Position GetRandomEmptyPosition()
+        {
+            Position position;
+            do
+            {
+                int x = random.Next(1, _width - 1);
+                int y = random.Next(1, _height - 1);
+                position = new Position(x, y);
+            } while (!(_tiles[position.x, position.y] is EmptyTile));
+            return position;
+        }
+
+        // Hero placement 
+        private void placeHero(HeroTile existingHero = null)
+        {
             Position spawn = GetRandomEmptyPosition();
-            oldHero._position = spawn;
-            this.hero = oldHero;
-            _tiles[spawn.x, spawn.y] = this.hero;
+            if (existingHero == null)
+            {
+                hero = new HeroTile(spawn);
+            }
+            else
+            {
+                existingHero._position = spawn;
+                hero = existingHero;
+            }
+            _tiles[spawn.x, spawn.y] = hero;
+        }
 
-            // Place the exit on a different random empty position
+        // Exit placement
+        private void placeExit()
+        {
             Position exitPos;
             do
             {
                 exitPos = GetRandomEmptyPosition();
             }
-            while (exitPos.x == this.hero.X && exitPos.y == this.hero.Y);
+            while (exitPos.x == hero.X && exitPos.y == hero.Y);
 
             _exitTile = new ExitTile(exitPos);
             _tiles[exitPos.x, exitPos.y] = _exitTile;
+        }
 
-            // Initialize enemies (you may want to pass numEnemies as a parameter)
-            int numEnemies = 0; // Set this to the desired number of enemies
+        // Enemy placement
+        private void placeEnemies(int numEnemies)
+        {
             _enemies = new EnemyTile[numEnemies];
             for (int i = 0; i < numEnemies; i++)
             {
                 Position enemyPos = GetRandomEmptyPosition();
-                var enemy = (EnemyTile)CreateTile(TileType.Enemy, enemyPos);
+                var enemy = new GruntTile(enemyPos);
                 _enemies[i] = enemy;
+                _tiles[enemyPos.x, enemyPos.y] = enemy;
             }
-
-            UpdateVision();
         }
 
+        public void SwopTiles(Tile a, Tile b)
+        {
+            var tempPos = a._position;
+            a._position = b._position;
+            b._position = tempPos;
+
+            _tiles[a.X, a.Y] = a;
+            _tiles[b.X, b.Y] = b;
+
+            if (a is HeroTile) hero = (HeroTile)a;
+            if (b is HeroTile) hero = (HeroTile)b;
+        }
+
+        // Level set up
         public Level(int currentLevelNumber)
         {
             CurrentLevelNumber = currentLevelNumber;
-            // Set default width/height or pass them as parameters
-            _width = 10; // or any default value
-            _height = 10; // or any default value
+            _width = 10; 
+            _height = 10; 
             _tiles = new Tile[_width, _height];
-            InitialiseTiles();
-            // You may want to add hero/enemies/exit here as needed
+            InitializeTiles();
+        }
+       
+        public void UpdateVision()
+        {
+            hero.UpdateVision(this);
+            foreach (var enemy in _enemies)
+            {
+                enemy.UpdateVision(this);
+            }
         }
 
+        public Tile GetTile(int x, int y)
+        {
+            if (x >= 0 && x < _width && y >= 0 && y < _height)
+                return _tiles[x, y];
+            return null;
+        }
+
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            for (int y = 0; y < _height; y++)
+            {
+                for (int x = 0; x < _width; x++)
+                {
+                    sb.Append(_tiles[x, y].Display);
+                }
+                sb.Append('\n');
+            }
+            return sb.ToString();
+        }
+
+        // Creating and placing tiles
         private Tile CreateTile(TileType type, Position position)
         {
             Tile tile;
@@ -147,63 +222,8 @@ namespace GADE6122_POE_Part_1
                     break;
                 default: throw new ArgumentOutOfRangeException(nameof(type), $" Unsupported TileType: {type}");
             }
-
             _tiles[position.x, position.y] = tile;
             return tile;
         }
-        private void InitialiseTiles()
-        {
-            for (int x = 0; x < _width; x++)
-                for (int y = 0; y < _height; y++)
-                {
-                    bool isBoundry = x == 0 || y == 0 || x == _width - 1 || y == _height - 1;
-                    CreateTile(isBoundry ? TileType.Wall : TileType.Empty, new Position(x, y));
-                }
-        }
-        public override string ToString()
-        {
-            var sb = new StringBuilder();
-            for (int y = 0; y < _height; y++)
-            {
-                for (int x = 0; x < _width; x++)
-                {
-                    sb.Append(_tiles[x, y].Display);
-                }
-                sb.Append('\n');
-            }
-            return sb.ToString();
-        }
-        private static readonly Random random = new Random();
-        private Position GetRandomEmptyPosition()
-        {
-            Position position;
-            do
-            {
-                int x = random.Next(1, _width - 1);
-                int y = random.Next(1, _height - 1);
-                position = new Position(x, y);
-            } while (!(_tiles[position.x, position.y] is EmptyTile));
-            return position;
-        }
-        public void SwopTiles(Tile a, Tile b)
-        {
-            Position temp = (Position)a._position;
-            a._position = b._position;
-            b._position = temp;
-
-            _tiles[a.X, a.Y] = a;
-            _tiles[b.X, b.Y] = b;
-
-            if (a is HeroTile) hero = (HeroTile)a;
-            if (b is HeroTile) hero = (HeroTile)b;
-        }
-            public void UpdateVision()
-            {
-                hero.Updatevision(this);
-                foreach (var enemy in _enemies)
-                {
-                    enemy.Updatevision(this);
-                }
-            }
     }
 }

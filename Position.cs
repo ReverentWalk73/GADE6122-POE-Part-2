@@ -24,7 +24,6 @@ namespace GADE6122_POE_Part_1
             get => _x;
             set => _x = value;
         }
-
         public int y
         {
             get => _y;

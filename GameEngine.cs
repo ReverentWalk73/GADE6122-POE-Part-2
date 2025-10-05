@@ -17,18 +17,23 @@ namespace GADE6122_POE_Part_1
             Complete,
             GameOver
         }
+
         // Fields
         private Level currentLevel;
-        private Random random;
+        private readonly Random random = new Random();
         private int numberOfLevels;
         public int numEnemies;
-
+        private int heroMoveCount = 0;
         private GameState _gameState = GameState.InProgress;
         private int _currentLevelNumber = 1;
         private int v;
+        private Tile tile;
+
+        // constants
         private const int MIN_SIZE = 10;
         private const int MAX_SIZE = 20;
 
+        // Properties
         public string HeroStats
         {
             get
@@ -36,65 +41,57 @@ namespace GADE6122_POE_Part_1
                 return $"{currentLevel.Hero.HitPoints  }/{currentLevel.Hero.MaxHitPoints}";
             }
         }
+        public GameState CurrentGameState => _gameState;
 
         // Constructor
         public GameEngine(int numberOfLevels, int numEnemies)
         {
             this.numberOfLevels = numberOfLevels;
-            this.random = new Random();
-            _currentLevelNumber = 1;
-            int width = random.Next(MIN_SIZE, MAX_SIZE + 1);
-            int height = random.Next(MIN_SIZE, MAX_SIZE + 1);
-            this.currentLevel = new Level(width, height, numEnemies);
-            _gameState = GameState.InProgress;
-        }
-        public GameEngine(int v)
-        {
+            this.numEnemies = numEnemies;
             StartGame();
-            this.v = v;
         }
-
+      
+        // Starting at level 1
         public void StartGame()
         {
             _currentLevelNumber = 1;
-            currentLevel = new Level(_currentLevelNumber);
+            int width = random.Next(MIN_SIZE, MAX_SIZE + 1);
+            int height = random.Next(MIN_SIZE, MAX_SIZE + 1);
+            currentLevel = new Level(width, height, numEnemies);
             _gameState = GameState.InProgress;
         }
+
         public void NextLevel()
         {
             _currentLevelNumber++;
 
-            // Store the current hero
             HeroTile oldHero = currentLevel.Hero;
 
-            // Generate new level size
+            List<EnemyTile> survivors = new List<EnemyTile>();
+            foreach (var e in currentLevel.Enemies)
+            {
+                if (!e.IsDead)
+                    survivors.Add(e);
+            }
+
             int width = random.Next(MIN_SIZE, MAX_SIZE + 1);
             int height = random.Next(MIN_SIZE, MAX_SIZE + 1);
 
-            // Create new level and pass the hero
-            currentLevel = new Level(width, height, oldHero);
+            currentLevel = new Level(width, height, survivors.ToArray(), oldHero);
+            currentLevel.UpdateVision();
         }
-        public override string ToString()
-        {
-            if (_gameState == GameState.GameOver)
-            {
-                return "Game Over!";
-            }
-            return currentLevel.ToString();
-        }
+
         private bool MoveHero(Direction.DirectionType direction)
         {
-            if (currentLevel == null || currentLevel.Hero == null)
-            {
-                return false;
-            }
+            if (currentLevel?.Hero == null) return false;
+
             HeroTile hero = currentLevel.Hero;
             Tile target = hero.Vision[(int)direction];
 
             if (target is EmptyTile)
             {
                 currentLevel.SwopTiles(hero, target);
-                hero.Updatevision(currentLevel);
+                currentLevel.UpdateVision();
                 return true;
             }
             if (target is ExitTile)
@@ -103,39 +100,32 @@ namespace GADE6122_POE_Part_1
                 if (_currentLevelNumber < numberOfLevels)
                 {
                     NextLevel();
-                    _gameState = GameState.InProgress;
-                }
-                else
-                {
                     _gameState = GameState.Complete;
                 }
                 return true;
             }
             return false;
         }
+
         public bool TriggerMovement(Direction.DirectionType direction)
         {
-            return MoveHero(direction);
-        } 
-        public GameState CurrentGameState { get { return _gameState; } }
-        private bool HeroAttack(Direction.DirectionType direction) {
-            Tile targetTile = currentLevel.Hero.Vision[(int)direction];
-
-            if (targetTile is CharacterTiles characterTarget)
+            bool moved = MoveHero(direction);
+            if (moved)
             {
-                // Hero attacks this enemy
-                currentLevel.Hero.Attack(characterTarget);
-                return true;   // Attack was successful
+                heroMoveCount++;
+                if (heroMoveCount % 2 == 0)
+                {
+                    MoveEnemies();
+                }
             }
-
-            return false;  // No valid target }
+            return moved;
         }
         public void TriggerAttack(Direction.DirectionType direction)
         {
             // Call hero attack
             bool success = HeroAttack(direction);
 
-            // If hero attack was successful, enemies should attack back
+            // If attack successful, enemies attack
             if (success)
             {
                 EnemiesAttack();
@@ -144,18 +134,27 @@ namespace GADE6122_POE_Part_1
                     _gameState = GameState.GameOver;
                 }
             }
-
-            // After attack, update vision + display
             currentLevel.UpdateVision();
         }
+        private bool HeroAttack(Direction.DirectionType direction)
+        {
+            Tile targetTile = currentLevel.Hero.Vision[(int)direction];
 
-            private void EnemiesAttack()
+            if (targetTile is CharacterTiles characterTarget)
+            {
+                // Hero attacks the enemy
+                currentLevel.Hero.Attack(characterTarget);
+                return true;   // if attack is successful
+            }
+
+            return false;  // No valid target
+        }
+        private void EnemiesAttack()
         {
             foreach (EnemyTile enemy in currentLevel.Enemies)
             {
                 if (!enemy.IsDead)
                 {
-                    // Get potential hero targets
                     CharacterTiles[] targets = enemy.GetTargets();
 
                     foreach (CharacterTiles target in targets)
@@ -165,6 +164,36 @@ namespace GADE6122_POE_Part_1
                 }
             }
         }
-        
+        private void MoveEnemies()
+        {
+            foreach (var enemy in currentLevel.Enemies)
+            {
+                if (enemy.IsDead) continue;
+                if (enemy.GetMove(out Tile targetTile))
+                {
+                    // Swaps if target is empty, enabling movement.
+                    if (targetTile is EmptyTile)
+                        currentLevel.SwopTiles(enemy, targetTile);
+                }
+            }
+        }
+     
+        public override string ToString()
+        {
+            if (_gameState == GameState.GameOver)
+            {
+                return "Game Over!";
+            }
+            return currentLevel.ToString();
+        }
+    }
+
+    public enum MoveDirection
+    {
+        None,
+        Up,
+        Down,
+        Left,
+        Right
     }
 }
