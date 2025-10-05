@@ -48,6 +48,15 @@ namespace GADE6122_POE_Part_1
             {
                 target.TakeDamage(attackPower);
             }
+            public void Heal(int amount)
+            {
+                hitpoints += amount;
+                if (hitpoints > maxHitPoints)
+                {
+                    hitpoints= maxHitPoints;
+                }
+            }
+
         }
     }
 }

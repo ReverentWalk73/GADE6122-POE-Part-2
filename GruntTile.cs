@@ -22,7 +22,7 @@ namespace GADE6122_POE_Part_1
         {
             get
             {
-                return IsDead ? 'X' : 'G';
+                return IsDead ? 'X' : '\u0394';
             }
         }
 

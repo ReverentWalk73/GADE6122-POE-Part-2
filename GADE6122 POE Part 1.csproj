@@ -59,8 +59,10 @@
     </Compile>
     <Compile Include="GameEngine.cs" />
     <Compile Include="GruntTile.cs" />
+    <Compile Include="HealthPickupTiles.cs" />
     <Compile Include="HeroTile.cs" />
     <Compile Include="Level.cs" />
+    <Compile Include="PickupTiles.cs" />
     <Compile Include="Position.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

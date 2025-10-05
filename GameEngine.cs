@@ -48,6 +48,7 @@ namespace GADE6122_POE_Part_1
         {
             this.numberOfLevels = numberOfLevels;
             this.numEnemies = numEnemies;
+           
             StartGame();
         }
       
@@ -81,12 +82,20 @@ namespace GADE6122_POE_Part_1
             currentLevel.UpdateVision();
         }
 
-        private bool MoveHero(Direction.DirectionType direction)
+        private bool MoveHero(Direction.DirectionType direction, PickupTile pickup)
         {
             if (currentLevel?.Hero == null) return false;
 
             HeroTile hero = currentLevel.Hero;
             Tile target = hero.Vision[(int)direction];
+
+            if (target is PickupTile pickups)
+            {
+                pickups.ApplyEffect(hero);
+                currentLevel.SwopTiles(hero, target);
+                currentLevel.UpdateVision();
+                return true;
+            }
 
             if (target is EmptyTile)
             {
@@ -94,6 +103,7 @@ namespace GADE6122_POE_Part_1
                 currentLevel.UpdateVision();
                 return true;
             }
+
             if (target is ExitTile)
             {
                 hero._position = target._position;
@@ -109,7 +119,7 @@ namespace GADE6122_POE_Part_1
 
         public bool TriggerMovement(Direction.DirectionType direction)
         {
-            bool moved = MoveHero(direction);
+            bool moved = MoveHero(direction, null); // Pass null if no pickup
             if (moved)
             {
                 heroMoveCount++;

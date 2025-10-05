@@ -21,7 +21,12 @@ namespace GADE6122_POE_Part_1
         private static readonly Random random = new Random();
         public EnemyTile[] Enemies => _enemies;
         public ExitTile ExitTile { get { return _exitTile; } }
+        private PickupTile[] _pickups;
+        private int numEnemies;
+
+        public PickupTile[] Pickups { get { return _pickups; } }
         public int CurrentLevelNumber { get; }
+
 
         internal enum TileType
         {
@@ -29,9 +34,11 @@ namespace GADE6122_POE_Part_1
             Empty,
             Hero,
             ExitTile,
-            Enemy 
+            Enemy,
+            pickup
+
         }
-        public Level(int width, int height,int numEnemies, HeroTile hero = null)
+        public Level(int width, int height, int numEnemies, int numPickups, HeroTile hero = null)
         {
             _width = width;
             _height = height;
@@ -45,11 +52,13 @@ namespace GADE6122_POE_Part_1
             placeExit();
             // Placing enemies
             placeEnemies(numEnemies);
+            // Placing pickups
+            placePickups(numPickups);
             // Updating vision
             UpdateVision();
         }
 
-        public Level(int width, int height, EnemyTile[] oldEnemies, HeroTile oldHero)
+        public Level(int width, int height, EnemyTile[] oldEnemies, HeroTile oldHero, int numPickups)
         {
             _width = width;
             _height = height;
@@ -78,6 +87,9 @@ namespace GADE6122_POE_Part_1
                 _enemies[i] = oldEnemies[i];
                 _tiles[enemyPos.x, enemyPos.y] = oldEnemies[i];
             }
+
+            placePickups(numPickups);
+
             UpdateVision();
         }
 
@@ -146,6 +158,17 @@ namespace GADE6122_POE_Part_1
             }
         }
 
+        private void placePickups(int numPickups)
+        {
+            _pickups = new PickupTile[numPickups];
+            for (int i = 0; i < _pickups.Length; i++)
+            {
+                Position pickupPos = GetRandomEmptyPosition();
+                _pickups[i] = new HealthPickupTiles(pickupPos);
+                _tiles[pickupPos.x, pickupPos.y] = _pickups[i];
+            }
+        }
+
         public void SwopTiles(Tile a, Tile b)
         {
             var tempPos = a._position;
@@ -160,18 +183,68 @@ namespace GADE6122_POE_Part_1
         }
 
         // Level set up
-        public Level(int currentLevelNumber)
+        public Level(int currentLevelNumber, int height, EnemyTile[] enemyTiles, int numEnemies)
         {
             CurrentLevelNumber = currentLevelNumber;
+            _height = height;
             _width = 10; 
             _height = 10; 
             _tiles = new Tile[_width, _height];
             InitializeTiles();
         }
-       
+
+        public Level(int width, int height, int numEnemies)
+        {
+            _width = width;
+            _height = height;
+            this.numEnemies = numEnemies;
+            _tiles = new Tile[_width, _height];
+            InitializeTiles();
+
+            // Place hero, exit, and enemies
+            placeHero();
+            placeExit();
+            placeEnemies(numEnemies);
+            // If you want pickups, call placePickups() with a number
+            // placePickups(numPickups);
+            UpdateVision();
+        }
+
+        public Level(int width, int height, EnemyTile[] enemyTiles, HeroTile oldHero)
+        {
+            _width = width;
+            _height = height;
+            _tiles = new Tile[_width, _height];
+            InitializeTiles();
+
+            // Place hero using the provided oldHero
+            placeHero(oldHero);
+
+            // Place exit
+            placeExit();
+
+            // Place enemies
+            _enemies = new EnemyTile[enemyTiles.Length];
+            for (int i = 0; i < enemyTiles.Length; i++)
+            {
+                Position enemyPos = GetRandomEmptyPosition();
+                enemyTiles[i]._position = enemyPos;
+                _enemies[i] = enemyTiles[i];
+                _tiles[enemyPos.x, enemyPos.y] = enemyTiles[i];
+            }
+
+            // Add this line to place pickups
+            placePickups(1); // Or any number you want
+
+            UpdateVision();
+        }
+
         public void UpdateVision()
         {
-            hero.UpdateVision(this);
+            if (hero != null)
+            {
+                hero.UpdateVision(this);
+            }
             foreach (var enemy in _enemies)
             {
                 enemy.UpdateVision(this);
@@ -220,6 +293,10 @@ namespace GADE6122_POE_Part_1
                 case TileType.Enemy:
                     tile = new GruntTile(position);// Initiating the grunt tile
                     break;
+                case TileType.pickup:
+                    tile = new HealthPickupTiles(position);
+                    break;
+
                 default: throw new ArgumentOutOfRangeException(nameof(type), $" Unsupported TileType: {type}");
             }
             _tiles[position.x, position.y] = tile;
