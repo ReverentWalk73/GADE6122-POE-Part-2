@@ -10,6 +10,6 @@ namespace GADE6122_POE_Part_1
     class HeroTile : CharacterTiles
     {
         public HeroTile(Position position) : base(position, 40, 5) { }
-        public override char Display => IsDead ? 'X' : '\u25b2';
+        public override char Display => IsDead ? 'X' : '▼';
     }
 }
