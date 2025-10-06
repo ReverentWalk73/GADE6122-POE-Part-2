@@ -205,8 +205,6 @@ namespace GADE6122_POE_Part_1
             placeHero();
             placeExit();
             placeEnemies(numEnemies);
-            // If you want pickups, call placePickups() with a number
-            // placePickups(numPickups);
             UpdateVision();
         }
 
@@ -233,8 +231,7 @@ namespace GADE6122_POE_Part_1
                 _tiles[enemyPos.x, enemyPos.y] = enemyTiles[i];
             }
 
-            // Add this line to place pickups
-            placePickups(1); // Or any number you want
+            placePickups(1); 
 
             UpdateVision();
         }

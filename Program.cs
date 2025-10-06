@@ -27,7 +27,7 @@ namespace GADE6122_POE_Part_1
             Application.SetCompatibleTextRenderingDefault(false);
             try
             {
-                Application.Run(new Form1()); // your startup form
+                Application.Run(new Form1());
             }
             catch (Exception ex)
             {

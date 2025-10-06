@@ -9,8 +9,6 @@ namespace GADE6122_POE_Part_1
 {
     internal class GruntTile : EnemyTile
     {
-        // private Tile[] Vision { get; } 
-
         // Implementing a GruntTile class with parameter position, while being passed to base class.
         private static Random random = new Random();
         public GruntTile(Position position) : base(position, 10, 1)

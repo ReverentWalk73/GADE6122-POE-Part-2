@@ -181,7 +181,7 @@ namespace GADE6122_POE_Part_1
                 if (enemy.IsDead) continue;
                 if (enemy.GetMove(out Tile targetTile))
                 {
-                    // Swaps if target is empty, enabling movement.
+                    // Swaps if target is empty or valid, enabling movement.
                     if (targetTile is EmptyTile)
                         currentLevel.SwopTiles(enemy, targetTile);
                 }
@@ -205,5 +205,6 @@ namespace GADE6122_POE_Part_1
         Down,
         Left,
         Right
+   
     }
 }

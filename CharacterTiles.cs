@@ -56,7 +56,6 @@ namespace GADE6122_POE_Part_1
                     hitpoints= maxHitPoints;
                 }
             }
-
         }
     }
 }

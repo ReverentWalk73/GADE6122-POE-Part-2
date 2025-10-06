@@ -13,7 +13,6 @@ namespace GADE6122_POE_Part_1
             public PickupTile(Position position) : base(position)
             {
             }
-
             public abstract void ApplyEffect(CharacterTiles target);
         }
     }

@@ -20,7 +20,7 @@ namespace GADE6122_POE_Part_1
 
         public override char Display
         {
-            get { return '+'; } // You can use another symbol if preferred
+            get { return '+'; }
         }
     }
 }
